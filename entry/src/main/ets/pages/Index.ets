@@ -1,40 +1,8 @@
-import { common, OpenLinkOptions, Want } from '@kit.AbilityKit';
-import { systemShare } from '@kit.ShareKit';
-import { uniformTypeDescriptor as utd } from '@kit.ArkData';
-import { UrlUtils } from '../utils/UrlUtils';
-import { promptAction } from '@kit.ArkUI';
-import { pasteboard } from '@kit.BasicServicesKit';
+import { common, OpenLinkOptions } from '@kit.AbilityKit';
 
-// 获取共享的storage实例
-// Obtaining a Shared Storage Instance
-let storage = LocalStorage.getShared();
-
-@Entry(storage)
+@Entry
 @Component
-struct SystemShare {
-  @State message: string = '';
-  private want: Want | undefined = storage.get<Want>('ShareUIAbilityWant');
-
-  aboutToAppear(): void {
-    systemShare.getSharedData(this.want).then((data: systemShare.SharedData) => {
-      let records: systemShare.SharedRecord[] = data.getRecords();
-      records.forEach(async (record: systemShare.SharedRecord) => {
-        switch (record.utd) {
-          // 文本类型
-          case utd.UniformDataType.TEXT:
-            record.content && (this.message = UrlUtils.extractPackageName(record.content));
-            break;
-        // 超链接类型
-          case utd.UniformDataType.HYPERLINK:
-            record.content && (this.message = UrlUtils.extractPackageName(record.content));
-            break;
-          default:
-            break;
-        }
-      });
-    })
-  }
-
+struct Index {
   // 打开应用商店
   openAppStore(): void {
     let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -44,53 +12,55 @@ struct SystemShare {
       appLinkingOnly: true
     };
     context.openLink(link, openLinkOptions)
-  }
 
-  // 复制包名
-  async copyText(): Promise<void> {
-    // 创建一条纯文本类型的剪贴板内容对象
-    let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.message);
-    // 将数据写入系统剪贴板
-    let systemPasteboard = pasteboard.getSystemPasteboard();
-    await systemPasteboard.setData(pasteData);
-
-    promptAction.showToast({
-      message: '包名已复制到剪贴板'
-    })
+    // let want: Want = {
+    //   bundleName: 'com.huawei.appmarket',
+    //   abilityName: 'com.huawei.appmarket.MainAbility',
+    //   action: 'viewAction',
+    // };
+    //
+    // context.startAbility(want)
   }
 
   build() {
-    Row() {
-      Column() {
-        if (this.message) {
-          Text(this.message)
-            .fontSize(20)
-            .fontWeight(FontWeight.Bold)
-        } else {
-          Text('请从应用商城中以分享的方式打开此应用以获取包名')
-            .fontSize(40)
-            .fontWeight(FontWeight.Bold)
-        }
+    Scroll() {
+      Column({ space: 20 }) {
+        Text('请从应用商城中以分享的方式打开此应用以获取包名')
+          .fontSize(30)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#6CF')
 
-        if (this.message) {
-          Button() {
-            Text(this.message ? '复制包名' : '打开应用商店')
-              .fontSize(25)
-              .fontColor($r('sys.color.comp_background_list_card'))
-              .fontWeight(FontWeight.Bold)
-          }
-          .type(ButtonType.Capsule)
-          .margin({ top: 20 })
-          .backgroundColor('#6CF')
-          .width('40%')
-          .height('5%')
-          .onClick(() => {
-            this.message ? this.copyText() : this.openAppStore()
-          })
+        Text('教程如下图:')
+          .fontSize(30)
+          .fontWeight(FontWeight.Bold)
+
+        Image($r('app.media.course'))
+          .width('90%')
+
+        Image($r('app.media.paste'))
+          .width('90%')
+
+        Image($r('app.media.search'))
+          .width('90%')
+
+        // TODO: 拉取应用市场
+        /*Button() {
+          Text('打开应用商城')
+            .fontSize(25)
+            .fontColor($r('sys.color.comp_background_list_card'))
+            .fontWeight(FontWeight.Bold)
         }
+        .type(ButtonType.Capsule)
+        .margin({ top: 20 })
+        .backgroundColor('#6CF')
+        .width('40%')
+        .height('5%')
+        .onClick(() => {
+          this.openAppStore()
+        })*/
       }
       .width('100%')
     }
-    .height('100%')
+    .padding(10)
   }
 }

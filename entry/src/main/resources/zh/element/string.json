@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "通过应用市场快速获取应用包名"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "包名解析"
+    },
+    {
+      "name": "SharePageAbility_label",
+      "value": "包名解析"
+    },
+    {
+      "name": "SharePageAbility_desc",
+      "value": "通过应用市场快速获取应用包名"
+    }
+  ]
+}

@@ -6,10 +6,18 @@
     },
     {
       "name": "EntryAbility_desc",
-      "value": "通过应用市场快速获取应用包名"
+      "value": "Quickly obtain the application package name by applying to the market"
     },
     {
       "name": "EntryAbility_label",
+      "value": "AppBundleNameForShared"
+    },
+    {
+      "name": "SharePageAbility_desc",
+      "value": "Quickly obtain the application package name by applying to the market"
+    },
+    {
+      "name": "SharePageAbility_label",
       "value": "AppBundleNameForShared"
     }
   ]

@@ -24,7 +24,7 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
   }
 
-  onWindowStageCreate(windowStage: window.WindowStage): void {
+  async onWindowStageCreate(windowStage: window.WindowStage): Promise<void> {
     let para: Storage = { ShareUIAbilityWant: this.storageWant };
     let storage = new LocalStorage(para);
     windowStage.loadContent('pages/Index', storage);
