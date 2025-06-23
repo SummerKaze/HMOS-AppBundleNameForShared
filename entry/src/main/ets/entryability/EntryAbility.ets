@@ -1,6 +1,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { FullScreen } from '../utils';
 
 const DOMAIN = 0x0000;
 
@@ -15,6 +16,7 @@ export default class EntryAbility extends UIAbility {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
     this.storageWant = want;
+    AppStorage.setOrCreate<Context>('context', this.context)
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -27,6 +29,7 @@ export default class EntryAbility extends UIAbility {
   async onWindowStageCreate(windowStage: window.WindowStage): Promise<void> {
     let para: Storage = { ShareUIAbilityWant: this.storageWant };
     let storage = new LocalStorage(para);
+    FullScreen.enable()
     windowStage.loadContent('pages/Index', storage);
   }
 
