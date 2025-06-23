@@ -61,8 +61,7 @@ struct SystemShare {
       Column() {
         if (this.message) {
           Text(this.message)
-            .fontSize(20)
-            .fontWeight(FontWeight.Bold)
+            .fontSize(40)
         } else {
           Text('请从应用商城中以分享的方式打开此应用以获取包名')
             .fontSize(40)
@@ -73,7 +72,6 @@ struct SystemShare {
           Button() {
             Text('复制包名')
               .fontSize(25)
-              .fontColor($r('sys.color.comp_background_list_card'))
               .fontWeight(FontWeight.Bold)
           }
           .type(ButtonType.Capsule)
