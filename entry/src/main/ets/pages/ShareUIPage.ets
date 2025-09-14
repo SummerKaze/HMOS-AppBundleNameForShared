@@ -4,6 +4,7 @@ import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { UrlUtils } from '../utils';
 import { promptAction } from '@kit.ArkUI';
 import { pasteboard } from '@kit.BasicServicesKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 // 获取共享的storage实例
 let storage = LocalStorage.getShared();
@@ -12,10 +13,12 @@ let storage = LocalStorage.getShared();
 @Component
 struct SystemShare {
   @State message: string = '';
+  @State isLoading: boolean = true; // 加载状态
   @State buttonScale: number = 1.0; // 按钮缩放动画
-  @State cardOpacity: number = 0.0; // 卡片透明度动画
-  @State titleTranslateY: number = -50; // 标题移动动画
-  @State packageNameRotate: number = 0; // 包名旋转动画
+  @State contentOpacity: number = 0.0; // 内容透明度动画
+  @State headerOpacity: number = 0.0; // 头部透明度动画
+  @State resultScale: number = 0.8; // 结果区域缩放动画
+  @State loadingRotate: number = 0; // 加载旋转动画
   private want: Want | undefined = storage.get<Want>('ShareUIAbilityWant');
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   @StorageProp('topAreaHeight')
@@ -28,49 +31,85 @@ struct SystemShare {
    * 获取共享数据并启动入场动画
    */
   aboutToAppear(): void {
-    systemShare.getSharedData(this.want).then((data: systemShare.SharedData) => {
-      let records: systemShare.SharedRecord[] = data.getRecords();
-      records.forEach(async (record: systemShare.SharedRecord) => {
-        switch (record.utd) {
-          // 文本类型
-          case utd.UniformDataType.TEXT:
-            record.content && (this.message = UrlUtils.extractPackageName(record.content));
-            break;
-        // 超链接类型
-          case utd.UniformDataType.HYPERLINK:
-            record.content && (this.message = UrlUtils.extractPackageName(record.content));
-            break;
-          default:
-            break;
-        }
-      });
+    // 启动头部动画
+    this.startHeaderAnimation();
 
-      // 启动入场动画
-      this.startEntranceAnimation();
-    })
+    try {
+      systemShare.getSharedData(this.want).then((data: systemShare.SharedData) => {
+        try {
+          let records: systemShare.SharedRecord[] = data.getRecords();
+          records.forEach(async (record: systemShare.SharedRecord) => {
+            switch (record.utd) {
+              // 文本类型
+              case utd.UniformDataType.TEXT:
+                record.content && (this.message = UrlUtils.extractPackageName(record.content));
+                break;
+            // 超链接类型
+              case utd.UniformDataType.HYPERLINK:
+                record.content && (this.message = UrlUtils.extractPackageName(record.content));
+                break;
+              default:
+                break;
+            }
+          });
+        } catch (error) {
+          console.error('解析共享数据时发生错误:', error);
+        }
+
+        // 数据处理完成，停止加载动画并显示结果
+        this.finishLoading();
+      }).catch((error: BusinessError) => {
+        console.error('获取共享数据失败:', error);
+        this.finishLoading();
+      });
+    } catch (error) {
+      console.error('启动共享数据获取失败:', error);
+      this.finishLoading();
+    }
   }
 
   /**
-   * 启动入场动画
+   * 启动头部入场动画
    */
-  private startEntranceAnimation(): void {
+  private startHeaderAnimation(): void {
     animateTo({
-      duration: 800,
+      duration: 600,
       curve: Curve.EaseOut
     }, () => {
-      this.cardOpacity = 1.0;
-      this.titleTranslateY = 0;
+      this.headerOpacity = 1.0;
     });
 
-    // 包名旋转动画
+    // 启动加载旋转动画
+    this.startLoadingAnimation();
+  }
+
+  /**
+   * 启动加载旋转动画
+   */
+  private startLoadingAnimation(): void {
+    animateTo({
+      duration: 2000,
+      curve: Curve.Linear,
+      iterations: -1
+    }, () => {
+      this.loadingRotate = 360;
+    });
+  }
+
+  /**
+   * 完成加载并显示结果
+   */
+  private finishLoading(): void {
     setTimeout(() => {
+      this.isLoading = false;
       animateTo({
-        duration: 600,
-        curve: Curve.EaseInOut
+        duration: 500,
+        curve: Curve.EaseOut
       }, () => {
-        this.packageNameRotate = 360;
+        this.contentOpacity = 1.0;
+        this.resultScale = 1.0;
       });
-    }, 300);
+    }, 800); // 给用户一点时间看到加载过程
   }
 
   onBackPress(): boolean | void {
@@ -81,207 +120,307 @@ struct SystemShare {
    * 复制包名到剪贴板
    */
   async copyText(): Promise<void> {
-    // 按钮点击动画
-    animateTo({
-      duration: 100,
-      curve: Curve.EaseInOut
-    }, () => {
-      this.buttonScale = 0.9;
-    });
-
-    setTimeout(() => {
+    try {
+      // 按钮点击动画
       animateTo({
         duration: 100,
         curve: Curve.EaseInOut
       }, () => {
-        this.buttonScale = 1.0;
+        this.buttonScale = 0.9;
       });
-    }, 100);
 
-    // 创建一条纯文本类型的剪贴板内容对象
-    let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.message);
-    // 将数据写入系统剪贴板
-    let systemPasteboard = pasteboard.getSystemPasteboard();
-    await systemPasteboard.setData(pasteData);
+      setTimeout(() => {
+        animateTo({
+          duration: 100,
+          curve: Curve.EaseInOut
+        }, () => {
+          this.buttonScale = 1.0;
+        });
+      }, 100);
 
-    promptAction.showToast({
-      message: '包名已复制到剪贴板',
-      duration: 2000
-    })
+      // 创建一条纯文本类型的剪贴板内容对象
+      let pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.message);
+      // 将数据写入系统剪贴板
+      let systemPasteboard = pasteboard.getSystemPasteboard();
+      await systemPasteboard.setData(pasteData);
 
-    // 关闭应用
-    setTimeout(() => {
-      this.context.terminateSelf();
-    }, 500)
+      promptAction.showToast({
+        message: '包名已复制到剪贴板',
+        duration: 2000
+      })
+
+      // 关闭应用
+      setTimeout(() => {
+        this.context.terminateSelf();
+      }, 500)
+    } catch (error) {
+      console.error('复制到剪贴板失败:', error);
+      promptAction.showToast({
+        message: '复制失败，请重试',
+        duration: 2000
+      })
+    }
   }
 
   build() {
-    Stack() {
+    Column() {
+      // 头部区域
       Column() {
-        // 标题部分
         Column() {
           Text('应用包名获取器')
-            .fontSize(32)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
-            .textShadow({
-              radius: 2,
-              offsetX: 0,
-              offsetY: 2,
-              color: '#40000000'
-            })
-            .translate({ y: this.titleTranslateY })
-            .opacity(this.cardOpacity)
+            .fontSize(28)
+            .fontWeight(700)
+            .fontColor('#FFFFFF')
+            .letterSpacing(0.5)
 
           Text('Package Name Extractor')
-            .fontSize(16)
-            .fontColor('#E0FFFFFF')
-            .margin({ top: 8 })
-            .opacity(this.cardOpacity)
+            .fontSize(14)
+            .fontColor('#E8F4FD')
+            .margin({ top: 4 })
         }
-        .margin({ top: 60, bottom: 40 })
+        .alignItems(HorizontalAlign.Center)
+      }
+      .width('100%')
+      .height(180)
+      .linearGradient({
+        angle: 135,
+        colors: [
+          ['#0A59F7', 0.0],  // 鸿蒙主题蓝
+          ['#1976D2', 0.6],  // 深蓝
+          ['#42A5F5', 1.0]   // 浅蓝
+        ]
+      })
+      .justifyContent(FlexAlign.Center)
+      .opacity(this.headerOpacity)
 
-        // 主要内容卡片
-        Column() {
-          if (this.message) {
-            // 成功获取包名的展示
+      // 主内容区域
+      Column() {
+        if (this.isLoading) {
+          // 加载状态
+          Column() {
             Column() {
-              Text('📦')
-                .fontSize(60)
-                .margin({ bottom: 20 })
-                .rotate({ angle: this.packageNameRotate })
+              Text('⚡')
+                .fontSize(48)
+                .rotate({ angle: this.loadingRotate })
 
-              Text('包名信息')
+              Text('正在解析包名信息')
                 .fontSize(18)
-                .fontColor('#666666')
-                .margin({ bottom: 10 })
-
-              Text(this.message)
-                .fontSize(20)
-                .fontWeight(FontWeight.Medium)
-                .textAlign(TextAlign.Center)
+                .fontWeight(500)
                 .fontColor('#333333')
-                .padding(16)
-                .backgroundColor('#F5F5F5')
-                .borderRadius(12)
-                .width('100%')
-                .copyOption(CopyOptions.InApp)
+                .margin({ top: 16 })
 
-              Button() {
-                Row() {
-                  Text('📋')
-                    .fontSize(20)
-                    .margin({ right: 8 })
-                  Text('复制包名')
-                    .fontSize(18)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor(Color.White)
-                }
-              }
-              .type(ButtonType.Normal)
-              .borderRadius(25)
-              .margin({ top: 30 })
-              .width('60%')
-              .height(50)
-              .scale({ x: this.buttonScale, y: this.buttonScale })
-              .linearGradient({
-                angle: 90,
-                colors: [
-                  ['#66ccff', 0.0],  // 主题蓝色
-                  ['#4da6ff', 1.0]   // 深蓝色
-                ]
-              })
-              .shadow({
-                radius: 10,
-                color: '#40000000',
-                offsetX: 0,
-                offsetY: 4
-              })
-              .onClick(() => {
-                this.copyText()
-              })
-            }
-            .animation({
-              duration: 300,
-              curve: Curve.EaseInOut
-            })
-
-          } else {
-            // 等待获取包名的提示
-            Column() {
-              Text('🔍')
-                .fontSize(80)
-                .margin({ bottom: 30 })
-
-              Text('请从应用商城中以分享的方式打开此应用')
-                .fontSize(18)
-                .fontWeight(FontWeight.Medium)
-                .textAlign(TextAlign.Center)
-                .fontColor('#666666')
-                .lineHeight(28)
-
-              Text('以获取应用包名信息')
-                .fontSize(18)
-                .fontWeight(FontWeight.Medium)
-                .textAlign(TextAlign.Center)
-                .fontColor('#666666')
+              Text('请稍候...')
+                .fontSize(14)
+                .fontColor('#999999')
                 .margin({ top: 8 })
 
-              // 加载动画点
+              // 进度指示器
               Row() {
                 ForEach([0, 1, 2], (index: number) => {
                   Circle()
-                    .width(8)
-                    .height(8)
-                    .fill('#66ccff')  // 主题蓝色
+                    .width(6)
+                    .height(6)
+                    .fill('#0A59F7')
                     .margin({ left: index > 0 ? 8 : 0 })
+                    .animation({
+                      duration: 800,
+                      delay: index * 200,
+                      curve: Curve.EaseInOut,
+                      iterations: -1
+                    })
                 })
               }
-              .margin({ top: 30 })
-              .animation({
-                duration: 1500,
-                curve: Curve.EaseInOut,
-                iterations: -1
-              })
+              .margin({ top: 24 })
             }
+            .width('100%')
+            .padding(40)
+            .backgroundColor('#FFFFFF')
+            .borderRadius(20)
+            .shadow({
+              radius: 12,
+              color: '#15000000',
+              offsetX: 0,
+              offsetY: 4
+            })
+          }
+          .width('100%')
+          .padding({ left: 24, right: 24 })
+          .justifyContent(FlexAlign.Center)
+          .layoutWeight(1)
+
+        } else {
+          // 结果展示状态
+          if (this.message) {
+            // 成功获取包名
+            Column() {
+              Column({ space: 20 }) {
+                // 成功图标
+                Column() {
+                  Text('✅')
+                    .fontSize(56)
+                }
+                .width(80)
+                .height(80)
+                .backgroundColor('#E8F5E8')
+                .borderRadius(40)
+                .justifyContent(FlexAlign.Center)
+
+                Column({ space: 12 }) {
+                  Text('包名解析成功')
+                    .fontSize(20)
+                    .fontWeight(600)
+                    .fontColor('#1A1A1A')
+
+                  Text('已成功提取应用包名信息')
+                    .fontSize(14)
+                    .fontColor('#666666')
+                }
+
+                // 包名展示区域
+                Column() {
+                  Text('包名信息')
+                    .fontSize(14)
+                    .fontColor('#999999')
+                    .margin({ bottom: 8 })
+
+                  Text(this.message)
+                    .fontSize(16)
+                    .fontWeight(500)
+                    .fontColor('#333333')
+                    .textAlign(TextAlign.Center)
+                    .padding(16)
+                    .backgroundColor('#F8F9FA')
+                    .borderRadius(12)
+                    .border({ width: 1, color: '#E0E0E0' })
+                    .width('100%')
+                    .copyOption(CopyOptions.InApp)
+                }
+                .width('100%')
+
+                // 操作按钮
+                Button() {
+                  Row({ space: 8 }) {
+                    Text('📋')
+                      .fontSize(18)
+                    Text('复制包名')
+                      .fontSize(16)
+                      .fontWeight(500)
+                      .fontColor('#FFFFFF')
+                  }
+                }
+                .type(ButtonType.Normal)
+                .width('70%')
+                .height(44)
+                .backgroundColor('#0A59F7')
+                .borderRadius(22)
+                .margin({ top: 8 })
+                .scale({ x: this.buttonScale, y: this.buttonScale })
+                .shadow({
+                  radius: 8,
+                  color: '#400A59F7',
+                  offsetX: 0,
+                  offsetY: 3
+                })
+                .stateEffect(true)
+                .onClick(() => {
+                  this.copyText()
+                })
+              }
+              .width('100%')
+              .padding(24)
+              .backgroundColor('#FFFFFF')
+              .borderRadius(20)
+              .shadow({
+                radius: 12,
+                color: '#15000000',
+                offsetX: 0,
+                offsetY: 4
+              })
+              .opacity(this.contentOpacity)
+              .scale({ x: this.resultScale, y: this.resultScale })
+            }
+            .width('100%')
+            .padding({ left: 24, right: 24 })
+            .justifyContent(FlexAlign.Center)
+            .layoutWeight(1)
+
+          } else {
+            // 未获取到包名
+            Column() {
+              Column({ space: 20 }) {
+                // 警告图标
+                Column() {
+                  Text('⚠️')
+                    .fontSize(56)
+                }
+                .width(80)
+                .height(80)
+                .backgroundColor('#FFF3E0')
+                .borderRadius(40)
+                .justifyContent(FlexAlign.Center)
+
+                Column({ space: 12 }) {
+                  Text('未能获取包名')
+                    .fontSize(20)
+                    .fontWeight(600)
+                    .fontColor('#1A1A1A')
+
+                  Text('请确保从华为应用商城分享正确的应用链接')
+                    .fontSize(14)
+                    .fontColor('#666666')
+                    .textAlign(TextAlign.Center)
+                    .lineHeight(20)
+                }
+
+                // 返回按钮
+                Button() {
+                  Text('返回重试')
+                    .fontSize(16)
+                    .fontWeight(500)
+                    .fontColor('#FFFFFF')
+                }
+                .type(ButtonType.Normal)
+                .width('60%')
+                .height(44)
+                .backgroundColor('#FF9800')
+                .borderRadius(22)
+                .margin({ top: 16 })
+                .stateEffect(true)
+                .onClick(() => {
+                  this.context.terminateSelf()
+                })
+              }
+              .width('100%')
+              .padding(24)
+              .backgroundColor('#FFFFFF')
+              .borderRadius(20)
+              .shadow({
+                radius: 12,
+                color: '#15000000',
+                offsetX: 0,
+                offsetY: 4
+              })
+              .opacity(this.contentOpacity)
+              .scale({ x: this.resultScale, y: this.resultScale })
+            }
+            .width('100%')
+            .padding({ left: 24, right: 24 })
+            .justifyContent(FlexAlign.Center)
+            .layoutWeight(1)
           }
         }
-        .padding(30)
-        .backgroundColor(Color.White)
-        .borderRadius(20)
-        .margin({ left: 20, right: 20 })
-        .shadow({
-          radius: 20,
-          color: '#30000000',
-          offsetX: 0,
-          offsetY: 10
-        })
-        .opacity(this.cardOpacity)
-        .scale({ x: this.cardOpacity, y: this.cardOpacity })
 
-        Blank()
-
-        // 底部提示
+        // 底部品牌信息
         Text('Made with ❤️ for HarmonyOS by SummerKaze')
-          .fontSize(14)
-          .fontColor('#C0FFFFFF')
-          .margin({ bottom: 40 })
-          .opacity(this.cardOpacity)
-
+          .fontSize(12)
+          .fontColor('#999999')
+          .padding({ bottom: 32 })
       }
+      .layoutWeight(1)
       .width('100%')
-      .height('100%')
-      .justifyContent(FlexAlign.Start)
+      .backgroundColor('#F5F5F5')
     }
     .width('100%')
     .height('100%')
-    .linearGradient({
-      angle: 135,
-      colors: [
-        ['#4a90e2', 0.0],  // 深蓝色
-        ['#66ccff', 0.5],  // 主题蓝色
-        ['#87ceeb', 1.0]   // 天空蓝
-      ]
-    })
   }
 }
