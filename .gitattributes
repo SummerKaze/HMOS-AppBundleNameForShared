@@ -1,0 +1,50 @@
+# HarmonyOS 项目语言统计优化配置
+# ==========================================
+
+# 将 ArkTS 文件识别为 TypeScript
+*.ets linguist-language=TypeScript
+
+# 排除构建产物和缓存目录
+entry/build/ linguist-generated
+*/build/ linguist-generated
+.preview/ linguist-generated
+dist/ linguist-generated
+
+# 排除依赖模块目录
+oh_modules/ linguist-vendored
+node_modules/ linguist-vendored
+
+# 排除自动生成的配置和资源文件
+**/ResourceTable.h linguist-generated
+**/ResourceTable.txt linguist-generated
+**/*ResourceTable*.ets linguist-generated
+**/router_map/ linguist-generated
+**/temp-*.json linguist-generated
+**/modules.abc linguist-generated
+**/sourceMaps.map linguist-generated
+
+# 排除日志和缓存文件
+*.log linguist-generated
+*.cache linguist-generated
+**/.cache/ linguist-generated
+
+# 标记文档文件
+README*.md linguist-documentation
+*.md linguist-documentation
+docs/ linguist-documentation
+
+# 排除包管理和构建配置文件（可选）
+oh-package-lock.json5 linguist-generated
+package-lock.json linguist-generated
+
+# 排除 IDE 和工具配置
+.idea/ linguist-generated
+.vscode/ linguist-generated
+*.iml linguist-generated
+
+# 排除测试覆盖率报告
+coverage/ linguist-generated
+*.lcov linguist-generated
+
+# 保留核心配置文件参与统计（这些体现了项目特征）
+# build-profile.json5, hvigorfile.ts, oh-package.json5 等将正常统计
