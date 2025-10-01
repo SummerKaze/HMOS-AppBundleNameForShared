@@ -1,8 +1,8 @@
 # HarmonyOS 项目语言统计优化配置
 # ==========================================
 
-# 将 ArkTS 文件识别为 TypeScript
-*.ets linguist-language=TypeScript
+# 将 ArkTS 文件识别为 ArkTS
+*.ets linguist-language=ArkTS
 
 # 排除构建产物和缓存目录
 entry/build/ linguist-generated
