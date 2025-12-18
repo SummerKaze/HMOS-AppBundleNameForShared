@@ -7,7 +7,7 @@
   <p>
     <img alt="HarmonyOS NEXT" src="https://img.shields.io/badge/HarmonyOS-NEXT-blue?style=for-the-badge&logo=huawei&logoColor=white"/>
     <img alt="ArkTS" src="https://img.shields.io/badge/ArkTS-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"/>
-    <img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge"/>
+    <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge"/>
     <img alt="Version" src="https://img.shields.io/badge/Version-1.1.0-orange?style=for-the-badge"/>
   </p>
   
@@ -160,10 +160,10 @@
 
 ## 📄 开源许可
 
-本项目基于 **MIT 许可证** 开源 - 详见 [LICENSE](LICENSE) 文件
+本项目基于 **Apache 2.0 许可证** 开源 - 详见 [LICENSE](LICENSE) 文件
 
 ```
-MIT License - 您可以自由使用、修改和分发此软件
+Apache License 2.0 - 您可以自由使用、修改和分发此软件
 ```
 
 ---

@@ -7,7 +7,7 @@
   <p>
     <img alt="HarmonyOS NEXT" src="https://img.shields.io/badge/HarmonyOS-NEXT-blue?style=for-the-badge&logo=huawei&logoColor=white"/>
     <img alt="ArkTS" src="https://img.shields.io/badge/ArkTS-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"/>
-    <img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge"/>
+    <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge"/>
     <img alt="Version" src="https://img.shields.io/badge/Version-1.1.0-orange?style=for-the-badge"/>
   </p>
   
@@ -160,10 +160,10 @@ If you find any issues or have improvement suggestions, please:
 
 ## 📄 Open Source License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details
+This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details
 
 ```
-MIT License - You are free to use, modify and distribute this software
+Apache License 2.0 - You are free to use, modify and distribute this software
 ```
 
 ---
